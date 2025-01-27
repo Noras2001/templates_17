@@ -1,0 +1,27 @@
+{% load static %} 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Мой интернет-магазин</title>
+    <!-- Подключаем наш CSS -->
+    <link rel="stylesheet" href="{% static 'shop/css/styles.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Мой Интернет-Магазин</h1>
+        <hr>
+    </header>
+
+    <main>
+        <!-- Здесь будет встраиваться контент из дочерних шаблонов -->
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>&copy; 2025 Мой магазин</p>
+    </footer>
+</body>
+</html>
