@@ -33,37 +33,7 @@
 
 ---
 
-## Структура проекта
 
-```
-shop_project/
-├── manage.py                 # Управляющий файл Django
-├── shop/
-│   ├── __init__.py
-│   ├── admin.py             # Регистрация моделей в админке
-│   ├── apps.py
-│   ├── models.py            # Определение модели Product
-│   ├── views.py             # Представления для списка/деталей товаров
-│   ├── urls.py              # URL-конфигурация для приложения shop
-│   ├── templates/
-│   │   └── shop/
-│   │       ├── base.html              # Базовый шаблон
-│   │       ├── product_list.html      # Шаблон списка товаров
-│   │       └── product_detail.html    # Шаблон деталей товара
-│   └── static/
-│       └── shop/
-│           └── css/
-│               └── styles.css         # Простейшие CSS-стили
-├── shop_project/
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py           # Настройки Django (БД, статика, медиа и т.д.)
-│   ├── urls.py               # Основная URL-конфигурация проекта
-│   └── wsgi.py
-└── media/
-    └── products/
-        └── (загружаемые изображения)  # Папка для хранения медиафайлов (ImageField)
-```
 
 ---
 
