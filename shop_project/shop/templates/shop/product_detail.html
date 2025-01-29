@@ -1,17 +1,41 @@
 {% extends 'shop/base.html' %}
 
 {% block content %}
-    <h2>Детали товара</h2>
+<!-- 
+    Шаблон детали товара.
+    Показываем расширенную информацию:
+    - Категория
+    - Цена
+    - Количество проданных
+    - Количество доступное
+    - Описание, и т.д.
+-->
 
-    {% if product %}
-        <h3>{{ product.name }}</h3>
+<h2>Детали товара</h2>
+
+{% if product %}
+    <h3>{{ product.name }}</h3>
+
+    <!-- Изображение (если есть) -->
+    {% if product.image %}
         <img src="{{ product.image.url }}" alt="{{ product.name }}" width="200">
-        <p>Цена: {{ product.price|floatformat:2 }} руб.</p>
-        <p>Описание: {{ product.description }}</p>
-        <p>Дата добавления: {{ product.created_at }}</p>
     {% else %}
-        <p>Товар не найден.</p>
+        <p>Изображение отсутствует</p>
     {% endif %}
-    
+
+    <p>Категория: {{ product.get_category_display }}</p>
+    <p>Цена: {{ product.price|floatformat:2 }} руб.</p>
+    <p>Продано: {{ product.quantity_sold }} шт.</p>
+    <p>Количество в наличии: {{ product.available_quantity }} шт.</p>
+    <p>Статус: {{ product.get_availability_status }}</p>
+
+    <p>Дата добавления: {{ product.created_at }}</p>
+    <p>Описание: {{ product.description }}</p>
+
+    <!-- Кнопка "Назад" на список товаров -->
     <p><a href="{% url 'product_list' %}">Назад к списку товаров</a></p>
+{% else %}
+    <p>Товар не найден.</p>
+{% endif %}
 {% endblock %}
+

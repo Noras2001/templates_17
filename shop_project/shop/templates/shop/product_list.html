@@ -1,21 +1,164 @@
 {% extends 'shop/base.html' %}
 
-{% block content %}
-    <h2>Список товаров</h2>
+{% load static %}
 
+{% block content %}
+<!-- 
+    Шаблон со списком товаров.
+    Здесь реализованы:
+    1) Фильтры по категории, цене, дате добавления;
+    2) Сортировка;
+    3) Пагинация;
+    4) AJAX-подгрузка данных (без перезагрузки страницы).
+-->
+
+<h2>Список товаров</h2>
+
+<!-- 
+    Форма с фильтрами и сортировкой.
+    'id="filter-form"' нужен для того, чтобы мы могли перехватить отправку
+    формы и сделать AJAX-запрос (fetch) вместо обычной перезагрузки страницы.
+-->
+<form id="filter-form" method="GET">
+    <!-- Фильтр по категории -->
+    <label for="category">Категория:</label>
+    <select name="category" id="category">
+        <option value="">Все</option>
+        <option value="bouquet">Букеты</option>
+        <option value="single">Одиночные цветы</option>
+        <option value="composition">Композиции</option>
+        <!-- Добавьте нужные категории по аналогии -->
+    </select>
+
+    <!-- Фильтр по диапазону цен -->
+    <label for="min_price">Цена от:</label>
+    <input type="number" name="min_price" id="min_price" step="0.01">
+
+    <label for="max_price">до:</label>
+    <input type="number" name="max_price" id="max_price" step="0.01">
+
+    <!-- Фильтр по дате добавления (например, "за 7 дней", "за 30 дней" и т.д.) -->
+    <label for="date_range">Дата добавления:</label>
+    <select name="date_range" id="date_range">
+        <option value="">Все</option>
+        <option value="7">Последние 7 дней</option>
+        <option value="30">Последние 30 дней</option>
+        <!-- При необходимости добавьте более точный выбор или календарь -->
+    </select>
+
+    <!-- Сортировка -->
+    <label for="sort_by">Сортировать по:</label>
+    <select name="sort_by" id="sort_by">
+        <!-- Варианты сортировки, которые будет обрабатывать сервер -->
+        <option value="-quantity_sold">Популярности (сначала самые продаваемые)</option>
+        <option value="price">Цене (по возрастанию)</option>
+        <option value="-price">Цене (по убыванию)</option>
+        <option value="-created_at">Дате добавления (сначала новые)</option>
+        <option value="created_at">Дате добавления (сначала старые)</option>
+    </select>
+
+    <button type="submit">Применить</button>
+</form>
+
+<!-- 
+    Блок, в котором будет отображаться список товаров.
+    При AJAX-запросах мы будем его очищать и заполнять заново.
+-->
+<div id="product-list">
+    <!-- 
+        Если рендер происходит без AJAX, мы отображаем товары из контекста:
+        В случае, когда JavaScript отключён, пользователь всё равно увидит список.
+    -->
     {% if products %}
-        <ul>
         {% for product in products %}
-            <li>
-                <a href="{% url 'product_detail' product.id %}">
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" width="100">
-                    <h3>{{ product.name }}</h3>
-                    <p>Цена: {{ product.price|floatformat:2 }} руб.</p>
-                </a>
-            </li>
+            <div class="product">
+                <h3>
+                    <a href="{% url 'product_detail' product.id %}">
+                        {{ product.name }}
+                    </a>
+                </h3>
+                <p>Цена: {{ product.price|floatformat:2 }} руб.</p>
+                <p>Категория: {{ product.get_category_display }}</p>
+                <p>Продано: {{ product.quantity_sold }} шт.</p>
+                <p>Статус: {{ product.get_availability_status }}</p>
+            </div>
         {% endfor %}
-        </ul>
     {% else %}
         <p>Товаров пока нет.</p>
     {% endif %}
+</div>
+
+<!-- 
+    Блок пагинации.
+    Используем классический подход: ссылаемся на разные страницы посредством
+    GET-параметра "page".
+    В AJAX-варианте нужно будет обрабатывать эти ссылки иначе (или скрывать),
+    но для наглядности оставим классический вариант.
+-->
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <!-- Ссылка на первую страницу (page=1) -->
+        <a href="?page=1">Первая</a>
+        <!-- Ссылка на предыдущую страницу -->
+        <a href="?page={{ page_obj.previous_page_number }}">« Предыдущая</a>
+    {% endif %}
+
+    <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+        <!-- Ссылка на следующую страницу -->
+        <a href="?page={{ page_obj.next_page_number }}">Следующая »</a>
+        <!-- Ссылка на последнюю страницу -->
+        <a href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+    {% endif %}
+</div>
+
+<!-- 
+    Скрипт для AJAX-запроса.
+    При submit формы (#filter-form) мы отменяем стандартное поведение
+    и делаем запрос к эндпоинту /shop/ajax-product-list/, передавая
+    нужные GET-параметры.
+    Ответ предполагается в формате JSON, который мы будем парсить
+    и динамически подгружать.
+-->
+<script>
+document.getElementById('filter-form').onsubmit = function(event) {
+    event.preventDefault();  // Предотвращаем стандартное поведение формы
+
+    // Сбор данных из формы
+    const formData = new FormData(this);
+    const queryString = new URLSearchParams(formData).toString();
+
+    // Выполняем fetch-запрос к эндпоинту /shop/ajax-product-list/
+    fetch(`/shop/ajax-product-list/?${queryString}`)
+        .then(response => response.json())
+        .then(data => {
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = ''; // Очищаем текущий список
+
+            // Отображение новых товаров из data.products
+            data.products.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <h3>
+                        <a href="/product/${product.id}/">${product.name}</a>
+                    </h3>
+                    <p>Цена: ${product.price} руб.</p>
+                    <p>Категория: ${product.category_display}</p>
+                    <p>Продано: ${product.quantity_sold} шт.</p>
+                    <p>Статус: ${product.availability_status}</p>
+                `;
+                productList.appendChild(productDiv);
+            });
+
+            // Если нужно также обновлять пагинацию через AJAX,
+            // то здесь можно перезаполнить блок .pagination
+            // на основе данных, возвращаемых в JSON (кол-во страниц, текущая страница и т.д.).
+        })
+        .catch(err => {
+            console.error('Ошибка при загрузке товаров по AJAX:', err);
+        });
+};
+</script>
 {% endblock %}
