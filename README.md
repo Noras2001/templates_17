@@ -30,6 +30,37 @@
 - **Поддержка изображений**: загрузка и хранение изображений в папке `media/`.
 - **Админ-панель**: встроенная Django-админка для управления товарами.
 
+## Структура проекта
+
+```
+shop_project/
+├── manage.py
+├── shop/
+│   ├── __init__.py
+│   ├── admin.py
+│   ├── apps.py
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── templates/
+│   │   └── shop/
+│   │       ├── base.html
+│   │       ├── product_list.html
+│   │       └── product_detail.html
+│   └── static/
+│       └── shop/
+│           └── css/
+│               └── styles.css
+├── shop_project/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── media/
+    └── products/
+
+```
 
 ## Технологии
 
